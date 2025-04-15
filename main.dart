@@ -1,9 +1,16 @@
 import 'boilerplate.dart';
+import 'RecipeManager.dart';
 
 void main() async {
-    
-    print('running boilerplate_start()');
-    await boilerplate_start();
-    print('boilerplate_start() done!');
-    
+  
+  // load the manager
+  RecipeManager rcpmgr = await boilerplate_load();
+
+  // do things
+
+  // save the manager
+  await boilerplate_save(rcpmgr);
+  
+  // exit program
+
 }
