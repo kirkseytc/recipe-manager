@@ -26,4 +26,27 @@ class Recipe {
 
   }
   
+  String toJSON(){
+
+    String json = '{"id":"$id","title":"$title","url":"$url","tags":[';
+
+    if(this.tags.isNotEmpty){
+
+      for(String s in this.tags){
+
+        json += '"$s",';
+
+      }
+
+      // removes last comma
+      json = json.substring(0, json.length - 1);
+
+    }
+
+    json += ']}';
+
+    return json;
+
+  }
+
 }

@@ -10,7 +10,7 @@ class RecipeManager {
   List<Recipe> recipes = List.empty(growable: true);
 
   /// The id of the currently logged in user
-  User? loggedInUserId;
+  User? loggedInUser;
 
   ///
   /// Logs in the user to the system with the provided [username] and [password].
@@ -23,13 +23,18 @@ class RecipeManager {
   int login(String username, String password){
 
     for(User usr in this.users){
-      if(usr.username.compareTo(username) == 0){
-        if(usr.password.compareTo(password) == 0){
-          loggedInUserId = usr;
-          return 0;
-        }
+      
+      if(usr.username.compareTo(username) != 0){
+        continue;
+      }
+
+      if(usr.password != password.hashCode){
         return 1;
       }
+
+      loggedInUser = usr;
+      return 0;
+    
     }
 
     return 2;
@@ -44,14 +49,12 @@ class RecipeManager {
   int signup(String username, String password){
 
     for(User usr in this.users){
-
       if(usr.username.compareTo(username) == 0){
         return 1;
       }
-
     }
 
-    this.users.add(User(username, password));
+    this.users.add(User(username, password.hashCode));
     return 0;
   }
 
@@ -70,6 +73,24 @@ class RecipeManager {
     return 0;
   }
 
-  
+  /// Returns the username of the logged in user, else returns null
+  String? whoami(){
+    return this.loggedInUser?.username;
+  }
+
+  void logout(){
+    this.loggedInUser = null;
+  }
+
+  void addRecipe(Recipe rcp){
+    this.recipes.add(rcp);
+  }
+
+  /// adds the recipe to the logged in users recipe list
+  /// 
+  /// if no user is logged in it does nothing.
+  void saveRecipe(Recipe rcp){
+      loggedInUser?.savedRecipeIds.add(rcp.id);
+  }
 
 }
