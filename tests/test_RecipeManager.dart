@@ -3,19 +3,33 @@ import '../code/RecipeManager.dart';
 void main(){
 
   // sign up and login tests
-  RecipeManager rcpmgr = RecipeManager();
+  RecipeManager manager = RecipeManager();
 
-  print(rcpmgr.signupAndLogin('admin', 'password'));
-  print(rcpmgr.signupAndLogin('admin', 'password'));
+  print(manager.signupAndLogin('admin', 'password'));
+  print(manager.signupAndLogin('admin', 'password'));
 
-  print(rcpmgr.whoami());
+  print(manager.whoami());
 
   // logout test
-  rcpmgr.logout();
-  print(rcpmgr.whoami());
+  // manager.logout();
+  // print(manager.whoami());
 
-  rcpmgr.signupAndLogin('test', '1234');
+  // manager.signupAndLogin('test', '1234');
 
-  print(rcpmgr.loggedInUser?.toJSON());
+  // print(manager.loggedInUser?.toJSON());
+
+  manager.addRecipe('cookies', {'yummy', 'sweet'}, 'url');
+  manager.addRecipe('pizza', {'italian', 'savory'}, 'www.dominos.com');
+
+  var results = manager.search('pizza');
+
+  manager.saveRecipe(results.first);
+  // print(manager.loggedInUser?.toJSON());
+  print(manager.getFavorites());
+  manager.logout();
+  manager.login('admin', 'password');
+  print(manager.whoami());
+  print(manager.getFavorites());
+
 
 }

@@ -29,7 +29,7 @@ class User {
     if(this.savedRecipeIds.isNotEmpty){
       
       for(int i in savedRecipeIds){
-        json = json + '"$i",';
+        json = json + '$i,';
       }
 
       // removes last comma
