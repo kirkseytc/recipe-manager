@@ -78,12 +78,14 @@ class RecipeManager {
     return this.loggedInUser?.username;
   }
 
+  /// logs out the current user
   void logout(){
     this.loggedInUser = null;
   }
 
-  void addRecipe(Recipe rcp){
-    this.recipes.add(rcp);
+  /// adds a recipe to the database
+  void addRecipe(String title, Set<String> tags, String url){
+    this.recipes.add(Recipe(title, tags, url));
   }
 
   /// adds the recipe to the logged in users recipe list
@@ -91,6 +93,16 @@ class RecipeManager {
   /// if no user is logged in it does nothing.
   void saveRecipe(Recipe rcp){
       loggedInUser?.savedRecipeIds.add(rcp.id);
+  }
+
+  /// DO NOT USE THIS FOR 
+  /// THE LOVE OF GOD!
+  /// ITS ONLY FOR THE BACKEND!
+  /// 
+  /// -Tristan :)
+  /// 
+  void addUser(String username, int password, Set<int> savedRecipeIds){
+    this.users.add(User.raw(username, password, savedRecipeIds));
   }
 
 }

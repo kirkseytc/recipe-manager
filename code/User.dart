@@ -16,9 +16,15 @@ class User {
     this.savedRecipeIds.add(recipeId);
   }
 
+  User.raw(String username, int password, Set<int> savedRecipeIds){
+    this.username = username;
+    this.password = password;
+    this.savedRecipeIds = savedRecipeIds;
+  }
+
   String toJSON(){
 
-    String json = '{"username":"$username","password":"$password","saved_recipe_ids":[';
+    String json = '{"username":"$username","password":$password,"saved_recipe_ids":[';
 
     if(this.savedRecipeIds.isNotEmpty){
       

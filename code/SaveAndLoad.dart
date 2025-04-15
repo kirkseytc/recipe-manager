@@ -5,41 +5,111 @@ import 'RecipeManager.dart';
 import 'User.dart';
 import 'Recipe.dart';
 
-var schemaDir = Directory('recipe_manager_data');
+var schemaDir = Directory('./recipe_manager_data');
 var userDBFile = File(schemaDir.path + '/users.json');
 var recipeDBFile = File(schemaDir.path + '/recipes.json');
 
-Future<RecipeManager> boilerplate_load() async {
+Future<RecipeManager> loadDatabase() async {
 
-  RecipeManager rcgmgr = RecipeManager();
+  RecipeManager manager = RecipeManager();
 
   // creating files if the don't exist already
 
-  if(!(await Directory('.').list().contains(schemaDir))){
+  /// checks for directory
+  /// 
+  /// if it doesn't exits create it and sub files and return manager
+  /// because there is no data to load in.
+  if(!(await schemaDir.exists())){
+    print('The directory "./recipe_manager_data" was not found. Creating required directory and sub files.');
     await schemaDir.create();
+    await userDBFile.create();
+    await recipeDBFile.create();
+    return manager;
   }
 
-  if(!(await schemaDir.list().contains(userDBFile))){
+  /// checks for users.json in the data directory
+  /// 
+  /// if it doesn't exit, create it
+  /// otherwise, load in data
+  if(!(await userDBFile.exists())){
+    print('The file "./recipe_manager_data/users.json" was not found. Creating file.');
     await userDBFile.create();
-  }   
+  } else {
+    manager = await loadUsers(manager);
+  }  
 
-  if(!(await schemaDir.list().contains(recipeDBFile))){
+  /// checks for recipes.json in the data directory
+  /// 
+  /// if it doesn't exit, create it
+  /// otherwise, load in data
+  if(!(await recipeDBFile.exists())){
+    print('The file "./recipe_manager_data/recipes.json" was not found. Creating file.');
     await recipeDBFile.create();
-  }   
+  } else {
+    manager = await loadRecipes(manager);
+  }  
 
-  return rcgmgr;
+  return manager;
 
 }
 
-Future<void> boilerplate_save(RecipeManager rcpmgr) async {
+Future<RecipeManager> loadRecipes(RecipeManager manager) async {
+
+  var recipeObjs;
+
+  try {
+    recipeObjs = jsonDecode(await recipeDBFile.readAsString());
+  } catch(FormatExeception){
+    print('Recipe database is not formated correctly. Failed to load in recipes');
+    return manager;
+  } 
+
+  for(Map recipeJson in recipeObjs){
+
+    String title = recipeJson['title'];
+    String url = recipeJson['url'];
+    Set<String> tags = Set<String>.from(recipeJson['tags'].toSet());
+
+    manager.addRecipe(title, tags, url);
+
+  }
+
+  return manager;
+}
+
+Future<RecipeManager> loadUsers(RecipeManager manager) async {
+
+  var userObjs;
+
+  try {
+    userObjs = jsonDecode(await userDBFile.readAsString());
+  } catch(FormatExeception){
+    print('User database is not formated correctly. Failed to load in users');
+    return manager;
+  }
+
+  for(Map userJson in userObjs){
+
+    String username = userJson['username'];
+    int password = userJson['password'];
+    Set<int> savedRecipeIds = Set<int>.from(userJson['saved_recipe_ids'].toSet());
+
+    manager.addUser(username, password, savedRecipeIds);
+
+  }
+
+  return manager;
+}
+
+Future<void> saveDatabase(RecipeManager manager) async {
 
   String json = '';
 
-  if(rcpmgr.users.isNotEmpty){
+  if(manager.users.isNotEmpty){
 
     json += '[';
 
-    for(User u in rcpmgr.users){
+    for(User u in manager.users){
       json += u.toJSON() + ",";
     }
 
@@ -54,11 +124,11 @@ Future<void> boilerplate_save(RecipeManager rcpmgr) async {
 
   json = '';
 
-  if(rcpmgr.recipes.isNotEmpty){
+  if(manager.recipes.isNotEmpty){
 
     json += '[';
 
-    for(Recipe r in rcpmgr.recipes){
+    for(Recipe r in manager.recipes){
 
       json += r.toJSON() + ',';
 
