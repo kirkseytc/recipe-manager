@@ -15,6 +15,9 @@ class User {
   void saveRecipe(int recipeId){
     this.savedRecipeIds.add(recipeId);
   }
+  void removeRecipe(int recipeId) {
+  savedRecipeIds.remove(recipeId);
+  } 
 
   User.raw(String username, int password, Set<int> savedRecipeIds){
     this.username = username;
