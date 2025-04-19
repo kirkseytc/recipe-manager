@@ -1,20 +1,15 @@
 import 'dart:io';
-import 'package:dart_console/dart_console.dart';
 
 import 'Recipe.dart';
 import 'RecipeManager.dart';
 import 'SaveAndLoad.dart';
 
-final console = Console();
 late RecipeManager manager;
 
 void main() async {
   manager = await loadDatabase();
-  manager.recipes.clear();
-  await saveDatabase(manager);
-  print('All recipes cleared!');
 
-if (manager.recipes.isEmpty) {
+  if (manager.recipes.isEmpty) {
     manager.addRecipe('Spaghetti', {'italian', 'dinner'}, 'https://www.inspiredtaste.net/38940/spaghetti-with-meat-sauce-recipe/');
     manager.addRecipe('Avocado Toast', {'breakfast', 'vegetarian'}, 'https://cookieandkate.com/avocado-toast-recipe/');
     manager.addRecipe('Chicken Tikka Masala', {'indian', 'spicy'}, 'https://www.recipetineats.com/chicken-tikka-masala/');
@@ -29,13 +24,13 @@ if (manager.recipes.isEmpty) {
     manager.addRecipe('Cornbread', {'american', 'southern', 'bread'}, 'https://www.allrecipes.com/recipe/17891/golden-sweet-cornbread/'); 
 
     await saveDatabase(manager); // 💾 Save to JSON
-    print('Sample recipes added!');
+    print('Database Empty! Sample recipes added!');
   }
 
   while (true) {
     //final isLoggedIn = manager.loggedInUser != null;
     final options = manager.loggedInUser != null
-      ? ['Search Recipes', 'Browse Recipes', 'View Saved Recipes', 'Add Recipe','', 'Logout', 'Quit']
+      ? ['Search Recipes', 'Browse Recipes', 'View Saved Recipes', 'Add Recipe', 'Logout', 'Quit']
       : ['Login', 'Signup', 'Quit'];
 
     int selection = showMenu(options, 'Recipe Manager');
@@ -44,8 +39,10 @@ if (manager.recipes.isEmpty) {
 
     if (choice == 'Login') {
       handleLogin();
+      print('');
     } else if (choice == 'Signup') {
       handleSignup();
+      print('');
     } else if (choice == 'Search Recipes') {
       searchRecipes();
     } else if (choice == 'Browse Recipes') {
@@ -55,7 +52,7 @@ if (manager.recipes.isEmpty) {
     } else if (choice == 'Add Recipe') {
       await addRecipe();
     } else if (choice == 'Logout') {
-      manager.loggedInUser = null;
+      manager.logout();
     } else if (choice == 'Quit') {
       await quit();
       return;
@@ -65,505 +62,190 @@ if (manager.recipes.isEmpty) {
 
 //~~~~~~~~~~~~~~~Menu UI~~~~~~~~~~~~~~~~~
 int showMenu(List<String> options, String title) {
+  clearScreen();
+
   int selected = 0;
-  const boxWidth = 50;
-  const leftPad = 2;
+  int i = 1;
+  
+  // no user logged in
+  if(options[0] == 'Login'){
+    print('Welcome to Recipe Manager!');
+  } else {
 
-  while (true) {
-    console.clearScreen();
-
-    final paddedWidth = boxWidth - 2;
-
-    // Top border
-    console.cursorPosition = Coordinate(2, leftPad);
-    console.setForegroundColor(ConsoleColor.yellow);
-    console.writeLine('╔' + '═' * paddedWidth + '╗');
-    console.resetColorAttributes();
-
-    // Title
-    final titleLine = title.padLeft((paddedWidth + title.length) ~/ 2).padRight(paddedWidth);
-    console.cursorPosition = Coordinate(3, leftPad);
-    console.writeLine('║' + titleLine + '║');
-
-    // Divider
-    console.cursorPosition = Coordinate(4, leftPad);
-    console.setForegroundColor(ConsoleColor.yellow);
-    console.writeLine('╟' + '─' * paddedWidth + '╢');
-    console.resetColorAttributes();
-
-    int row = 5;
-
-    // Welcome
-    if (manager.loggedInUser != null) {
-      final welcome = 'Welcome, ${manager.loggedInUser!.username}!';
-      final padded = welcome.padLeft((paddedWidth + welcome.length) ~/ 2).padRight(paddedWidth);
-      console.cursorPosition = Coordinate(row++, leftPad);
-      console.writeLine('║' + padded + '║');
-      console.cursorPosition = Coordinate(row++, leftPad);
-      console.writeLine('╟' + '─' * paddedWidth + '╢');
-    }
-
-    // Spacer before account actions
-    final spacerIndex = options.indexWhere((o) => o == 'Logout' || o == 'Quit');
-
-    for (int i = 0; i < options.length; i++) {
-      if (i == spacerIndex && i != 0) {
-        console.cursorPosition = Coordinate(row++, leftPad);
-        console.writeLine('║' + ' ' * paddedWidth + '║');
-      }
-
-      final isSelected = i == selected;
-      final prefix = isSelected ? '▶ ' : '  ';
-      final line = prefix + options[i];
-      final paddedLine = line.padRight(paddedWidth);
-
-      console.cursorPosition = Coordinate(row++, leftPad);
-      if (isSelected) console.setForegroundColor(ConsoleColor.cyan);
-      console.writeLine('║' + paddedLine + '║');
-      if (isSelected) console.resetColorAttributes();
-    }
-
-    // Bottom border
-    console.cursorPosition = Coordinate(row++, leftPad);
-    console.setForegroundColor(ConsoleColor.yellow);
-    console.writeLine('╚' + '═' * paddedWidth + '╝');
-    console.resetColorAttributes();
-
-    // Input handling
-    final key = console.readKey();
-
-    if (key.controlChar == ControlCharacter.arrowUp) {
-      do {
-        selected = (selected - 1 + options.length) % options.length;
-      } while (options[selected].isEmpty);
-    } else if (key.controlChar == ControlCharacter.arrowDown) {
-      do {
-        selected = (selected + 1) % options.length;
-      } while (options[selected].isEmpty);
-    } else if (key.controlChar == ControlCharacter.enter) {
-      return selected;
-    }
+    print('Welcome ${manager.loggedInUser?.username}!');
   }
+
+  print('');
+    
+  for(String option in options){
+    print('$i. $option');
+    i++;
+  }
+  
+  print('');
+
+  String? input = null; 
+  while(input == null){
+    stdout.write('Enter the number associated with option you\'d like to use: ');
+    input = stdin.readLineSync();
+  }
+
+  print('');
+
+  selected = int.parse(input) - 1;
+
+  if(selected < 0 || selected >= options.length){
+    selected = 0;
+  }
+
+  return selected;
 }
 
 //~~~~~~~~~~~~Login~~~~~~~~~~~~~~
 void handleLogin() {
-  const boxWidth = 50;
-  const leftPad = 2;
-  final paddedWidth = boxWidth - 2;
+  
+  clearScreen();
+  print('[Login]\n');
 
-  console.clearScreen();
-
-  // Top border
-  console.cursorPosition = Coordinate(2, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╔' + '═' * paddedWidth + '╗');
-  console.resetColorAttributes();
-
-  // Title
-  final title = 'Login';
-  final titleLine = title.padLeft((paddedWidth + title.length) ~/ 2).padRight(paddedWidth);
-  console.cursorPosition = Coordinate(3, leftPad);
-  console.writeLine('║' + titleLine + '║');
-
-  // Divider
-  console.cursorPosition = Coordinate(4, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╟' + '─' * paddedWidth + '╢');
-  console.resetColorAttributes();
-
-  // Username
-  console.cursorPosition = Coordinate(6, leftPad + 2);
   stdout.write('Username: ');
-  final username = stdin.readLineSync();
-
-  // Password
-  console.cursorPosition = Coordinate(8, leftPad + 2);
+  String? username = stdin.readLineSync();
   stdout.write('Password: ');
-  final password = stdin.readLineSync();
+  String? password = stdin.readLineSync();
 
-  int messageRow = 10;
-
-  console.cursorPosition = Coordinate(messageRow++, leftPad);
-  if (username != null && password != null) {
-    final result = manager.login(username, password);
-    if (result == 0) {
-      console.setForegroundColor(ConsoleColor.green);
-      console.writeLine('Login successful!'.padRight(paddedWidth));
-    } else {
-      console.setForegroundColor(ConsoleColor.red);
-      console.writeLine('Incorrect username or password.'.padRight(paddedWidth));
-    }
-  } else {
-    console.setForegroundColor(ConsoleColor.red);
-    console.writeLine('Invalid input.'.padRight(paddedWidth));
+  if(username == null){
+    print('No username provided. Login Failed.');
+    return;
   }
-  console.resetColorAttributes();
 
-  console.cursorPosition = Coordinate(messageRow + 1, leftPad + 2);
+  if(password == null){
+    print('No password provided. Login Failed.');
+    return;
+  }
+
+  int result = manager.login(username, password);
+
+  switch(result){
+    case 0:
+      break;
+    case 1:
+      print('Incorrect password. Login Failed.');
+      break;
+    case 2:
+      print('User does not exist. Login Failed.');
+      break;
+  }
+
 }
 
 //~~~~~~~~~~~~~~SignUp~~~~~~~~~~~~~~
 void handleSignup() {
-  const boxWidth = 50;
-  const leftPad = 2;
-  final paddedWidth = boxWidth - 2;
 
-  console.clearScreen();
+  clearScreen();
+  print('[Signup]\n');
+  
+  stdout.write('Username: ');
+  String? username = stdin.readLineSync();
+  stdout.write('Password: ');
+  String? password = stdin.readLineSync();
 
-  // Top border
-  console.cursorPosition = Coordinate(2, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╔' + '═' * paddedWidth + '╗');
-  console.resetColorAttributes();
-
-  // Title
-  final title = 'Signup';
-  final titleLine = title.padLeft((paddedWidth + title.length) ~/ 2).padRight(paddedWidth);
-  console.cursorPosition = Coordinate(3, leftPad);
-  console.writeLine('║' + titleLine + '║');
-
-  // Divider
-  console.cursorPosition = Coordinate(4, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╟' + '─' * paddedWidth + '╢');
-  console.resetColorAttributes();
-
-  // Username
-  console.cursorPosition = Coordinate(6, leftPad + 2);
-  stdout.write('Choose a username: ');
-  final username = stdin.readLineSync();
-
-  // Password
-  console.cursorPosition = Coordinate(8, leftPad + 2);
-  stdout.write('Choose a password: ');
-  final password = stdin.readLineSync();
-
-  int messageRow = 10;
-
-  console.cursorPosition = Coordinate(messageRow++, leftPad);
-  if (username != null && password != null) {
-    final result = manager.signup(username, password);
-    if (result == 0) {
-      console.setForegroundColor(ConsoleColor.green);
-      console.writeLine('Signup successful!'.padRight(paddedWidth));
-    } else {
-      console.setForegroundColor(ConsoleColor.red);
-      console.writeLine('Username already taken.'.padRight(paddedWidth));
-    }
-  } else {
-    console.setForegroundColor(ConsoleColor.red);
-    console.writeLine('Invalid input.'.padRight(paddedWidth));
+  if(username == null){
+    print('No username provided. Signup Failed.');
+    return;
   }
-  console.resetColorAttributes();
 
-  console.cursorPosition = Coordinate(messageRow + 1, leftPad + 2);
-  pause();
+  if(password == null){
+    print('No password provided. Signup Failed.');
+    return;
+  }
+
+  int result = manager.signupAndLogin(username, password);
+
+  switch(result){
+    case 0:
+      break;
+    case 1:
+      print('Username already taken. Signup Failed.');
+      break;
+  }
+
 }
 
 //~~~~~~~~~~~~~RecipeDetails~~~~~~~~~~~~~~
 void showRecipeDetails(Recipe recipe) {
-  const boxWidth = 50;
-  const leftPad = 2;
-  final paddedWidth = boxWidth - 2;
+  
+  bool isSaved = true;
 
-  console.clearScreen();
-
-  // Top border
-  console.cursorPosition = Coordinate(2, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╔' + '═' * paddedWidth + '╗');
-  console.resetColorAttributes();
-
-  // Title (centered)
-  final titleLine = recipe.title.padLeft((paddedWidth + recipe.title.length) ~/ 2).padRight(paddedWidth);
-  console.cursorPosition = Coordinate(3, leftPad);
-  console.writeLine('║' + titleLine + '║');
-
-  // Divider
-  console.cursorPosition = Coordinate(4, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╟' + '─' * paddedWidth + '╢');
-  console.resetColorAttributes();
-
-  int row = 5;
-
-  // Tags
-  final tagsLine = 'Tags: ${recipe.tags.join(', ')}';
-  console.cursorPosition = Coordinate(row++, leftPad);
-  console.writeLine('║ ' + tagsLine.padRight(paddedWidth - 1) + '║');
-
-  // URL
-  final fullUrl = recipe.url;
-  final maxUrlLength = paddedWidth - 7;
-
-  final clippedUrl = fullUrl.length > maxUrlLength
-    ? fullUrl.substring(0, maxUrlLength)
-    : fullUrl;
-
-  console.cursorPosition = Coordinate(row++, leftPad);
-  console.writeLine('║ URL: ' + clippedUrl.padRight(paddedWidth - 6) + '║');
-
-  if (fullUrl.length > maxUrlLength) {
-    console.cursorPosition = Coordinate(row++, leftPad);
+  if(manager.loggedInUser != null){
+    isSaved = manager.loggedInUser!.savedRecipeIds.contains(recipe.id);
   }
 
-  // Spacer
-  console.cursorPosition = Coordinate(row++, leftPad);
-  console.writeLine('║' + ' ' * paddedWidth + '║');
+  clearScreen();
 
-  // Save/Unsave Logic
-  if (manager.loggedInUser != null) {
-    final isSaved = manager.loggedInUser!.savedRecipeIds.contains(recipe.id);
+  print('[${recipe.title}]');
+  print('');
+  print('Link to recipe: ${recipe.url}');
+  print('');
 
-    final prompt = isSaved
-        ? 'Remove from favorites? (y/n): '
-        : 'Save to favorites? (y/n): ';
+  if(manager.loggedInUser != null){
 
-    console.cursorPosition = Coordinate(row++, leftPad + 2);
-    stdout.write(prompt);
-    final input = stdin.readLineSync()?.toLowerCase();
-
-    console.cursorPosition = Coordinate(row++, leftPad);
-    if (input == 'y') {
-      if (isSaved) {
-        manager.loggedInUser!.removeRecipe(recipe.id);
-        console.setForegroundColor(ConsoleColor.red);
-        console.writeLine('Recipe removed from favorites.'.padRight(paddedWidth));
-      } else {
-        manager.loggedInUser!.saveRecipe(recipe.id);
-        console.setForegroundColor(ConsoleColor.green);
-        console.writeLine('Recipe saved to favorites!'.padRight(paddedWidth));
-      }
-      console.resetColorAttributes();
+    if(isSaved){
+      stdout.write('Removed from saved recipes? (y/[N]): ');
+    } else {
+      stdout.write('Add to saved recipes? (y/[N]): ');
     }
+
+    String? input = stdin.readLineSync();
+
+    if(input != null){
+      if(input.toLowerCase().contains('y')){
+        if(isSaved){
+          manager.unsaveRecipe(recipe.id);
+        } else {
+          manager.saveRecipe(recipe.id);
+        }
+      }
+    }
+
+  } else {
+
+    stdout.write('Press enter to continue...');
+    stdin.readByteSync();
+
   }
 
-  console.cursorPosition = Coordinate(row + 1, leftPad + 2);
-  pause();
 }
 
 //~~~~~~~~~~~~~~SearchRecipe~~~~~~~~~~~~~~~~~
 void searchRecipes() {
-  console.clearScreen();
-  console.cursorPosition = Coordinate(2, 2);
-  stdout.write('Enter a search keyword: ');
-  final query = stdin.readLineSync();
 
-  if (query == null || query.trim().isEmpty) {
-    print('Search canceled.');
-    pause();
-    return;
-  }
-
-  final recipeIds = manager.search(query.trim());
-  final results = manager.recipes
-      .where((recipe) => recipeIds.contains(recipe.id))
-      .toList();
-
-  if (results.isEmpty) {
-    print('\nNo recipes found matching "$query".');
-    pause();
-    return;
-  }
-
-  int selected = 0;
-  while (true) {
-    console.clearScreen();
-    console.cursorPosition = Coordinate(2, 2);
-    console.writeLine('=== Search Results for "$query" ===\n');
-
-    for (int i = 0; i < results.length; i++) {
-      if (i == selected) {
-        console.setForegroundColor(ConsoleColor.magenta);
-        console.writeLine('▶ ${results[i].title}');
-      } else {
-        console.resetColorAttributes();
-        console.writeLine('  ${results[i].title}');
-      }
-    }
-
-    console.writeLine('\n(Use arrow keys, Enter to view, Esc to go back)');
-    final key = console.readKey();
-
-    if (key.controlChar == ControlCharacter.arrowUp) {
-      selected = (selected - 1 + results.length) % results.length;
-    } else if (key.controlChar == ControlCharacter.arrowDown) {
-      selected = (selected + 1) % results.length;
-    } else if (key.controlChar == ControlCharacter.enter) {
-      showRecipeDetails(results[selected]);
-    } else if (key.controlChar == ControlCharacter.escape) {
-      return;
-    }
-  }
 }
 
 
 //~~~~~~~~~~~~~~BrowseRecipe~~~~~~~~~~~~~~
-void browseRecipes() {
-  if (manager.recipes.isEmpty) {
-    console.clearScreen();
-    console.cursorPosition = Coordinate(2, 2);
-    console.writeLine('No recipes found.');
-    pause();
-    return;
+void browseRecipes([Set<int>? haystack]) {
+  
+  clearScreen();
+
+  if(haystack != null){
+
+  } else {
+
+    
+
   }
 
-  List<String> titles = manager.recipes.map((r) => r.title).toList();
-  int selected = 0;
+  
 
-  while (true) {
-    console.clearScreen();
-    console.cursorPosition = Coordinate(2, 2);
-    console.writeLine('=== Browse Recipes ===\n');
-
-    for (int i = 0; i < titles.length; i++) {
-      if (i == selected) {
-        console.setForegroundColor(ConsoleColor.cyan);
-        console.writeLine('▶ ${titles[i]}');
-      } else {
-        console.resetColorAttributes();
-        console.writeLine('  ${titles[i]}');
-      }
-    }
-
-    console.writeLine('\n(Use arrow keys, Enter to view, Esc to go back)');
-    final key = console.readKey();
-
-    if (key.controlChar == ControlCharacter.arrowUp) {
-      selected = (selected - 1 + titles.length) % titles.length;
-    } else if (key.controlChar == ControlCharacter.arrowDown) {
-      selected = (selected + 1) % titles.length;
-    } else if (key.controlChar == ControlCharacter.enter) {
-      showRecipeDetails(manager.recipes[selected]);
-    } else if (key.controlChar == ControlCharacter.escape) {
-      return;
-    }
-  }
 }
 
 //~~~~~~~~~~~~~AddRecipe~~~~~~~~~~~~~
 Future<void> addRecipe() async {
-  const boxWidth = 50;
-  const leftPad = 2;
-  final paddedWidth = boxWidth - 2;
-
-  console.clearScreen();
-
-  // Top border
-  console.cursorPosition = Coordinate(2, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╔' + '═' * paddedWidth + '╗');
-  console.resetColorAttributes();
-
-  // Title
-  final title = 'Add a New Recipe';
-  final titleLine = title.padLeft((paddedWidth + title.length) ~/ 2).padRight(paddedWidth);
-  console.cursorPosition = Coordinate(3, leftPad);
-  console.writeLine('║' + titleLine + '║');
-
-  // Divider
-  console.cursorPosition = Coordinate(4, leftPad);
-  console.setForegroundColor(ConsoleColor.yellow);
-  console.writeLine('╟' + '─' * paddedWidth + '╢');
-  console.resetColorAttributes();
-
-  int row = 6;
-
-  // Recipe Title
-  console.cursorPosition = Coordinate(row++, leftPad + 2);
-  stdout.write('Recipe Title: ');
-  final titleInput = stdin.readLineSync();
-
-  // Tags
-  console.cursorPosition = Coordinate(row++, leftPad + 2);
-  stdout.write('Tags (comma-separated): ');
-  final tagInput = stdin.readLineSync();
-  final tags = tagInput != null
-      ? tagInput.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toSet()
-      : <String>{};
-
-  // URL
-  console.cursorPosition = Coordinate(row++, leftPad + 2);
-  stdout.write('URL (optional): ');
-  final url = stdin.readLineSync() ?? '';
-
-  // Validation + Save
-  row += 1;
-  console.cursorPosition = Coordinate(row++, leftPad);
-
-  if (titleInput == null || titleInput.trim().isEmpty) {
-    console.setForegroundColor(ConsoleColor.red);
-    console.writeLine('Title is required.'.padRight(paddedWidth));
-    console.resetColorAttributes();
-    console.cursorPosition = Coordinate(row++, leftPad + 2);
-    pause();
-    return;
-  }
-
-  manager.addRecipe(titleInput.trim(), tags, url.trim());
-  await saveDatabase(manager);
-
-  console.setForegroundColor(ConsoleColor.green);
-  console.writeLine('Recipe added successfully and saved!'.padRight(paddedWidth));
-  console.resetColorAttributes();
-
-  console.cursorPosition = Coordinate(row + 1, leftPad + 2);
-  pause();
+  
 }
 
 //~~~~~~~~~~~~~ViewSaved~~~~~~~~~~~~~
 void viewSavedRecipes() {
-  if (manager.loggedInUser == null) {
-    console.clearScreen();
-    console.cursorPosition = Coordinate(2, 2);
-    console.writeLine('You must be logged in to view saved recipes.');
-    pause();
-    return;
-  }
-
-  final savedIds = manager.loggedInUser!.savedRecipeIds;
-  final savedRecipes = manager.recipes.where((r) => savedIds.contains(r.id)).toList();
-
-  if (savedRecipes.isEmpty) {
-    console.clearScreen();
-    console.cursorPosition = Coordinate(2, 2);
-    console.writeLine('No saved recipes yet.');
-    pause();
-    return;
-  }
-
-  int selected = 0;
-
-  while (true) {
-    console.clearScreen();
-    console.cursorPosition = Coordinate(2, 2);
-    console.writeLine('=== Saved Recipes ===\n');
-
-    for (int i = 0; i < savedRecipes.length; i++) {
-      final recipe = savedRecipes[i];
-      if (i == selected) {
-        console.setForegroundColor(ConsoleColor.green);
-        console.writeLine('▶ ${recipe.title}');
-      } else {
-        console.resetColorAttributes();
-        console.writeLine('  ${recipe.title}');
-      }
-    }
-
-    console.writeLine('\n(Use arrow keys, Enter to view, Esc to go back)');
-    final key = console.readKey();
-
-    if (key.controlChar == ControlCharacter.arrowUp) {
-      selected = (selected - 1 + savedRecipes.length) % savedRecipes.length;
-    } else if (key.controlChar == ControlCharacter.arrowDown) {
-      selected = (selected + 1) % savedRecipes.length;
-    } else if (key.controlChar == ControlCharacter.enter) {
-      showRecipeDetails(savedRecipes[selected]);
-    } else if (key.controlChar == ControlCharacter.escape) {
-      return;
-    }
-  }
+  
 }
 
 List<String> wrapText(String text, int width) {
@@ -590,13 +272,14 @@ List<String> wrapText(String text, int width) {
   return lines;
 }
 
-void pause() {
-  stdout.write('\nPress Enter to continue...');
-  stdin.readLineSync();
-}
-
 Future<void> quit() async {
-  print('\nSaving data...');
+  print('Saving data...');
   await saveDatabase(manager);
   print('Goodbye!');
+}
+
+void clearScreen(){
+  for(int i = 0; i < 60; i++){
+    print('');
+  }
 }
