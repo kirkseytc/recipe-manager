@@ -10,9 +10,30 @@ late RecipeManager manager;
 
 void main() async {
   manager = await loadDatabase();
+  manager.recipes.clear();
+  await saveDatabase(manager);
+  print('All recipes cleared!');
+
+if (manager.recipes.isEmpty) {
+    manager.addRecipe('Spaghetti', {'italian', 'dinner'}, 'https://www.inspiredtaste.net/38940/spaghetti-with-meat-sauce-recipe/');
+    manager.addRecipe('Avocado Toast', {'breakfast', 'vegetarian'}, 'https://cookieandkate.com/avocado-toast-recipe/');
+    manager.addRecipe('Chicken Tikka Masala', {'indian', 'spicy'}, 'https://www.recipetineats.com/chicken-tikka-masala/');
+    manager.addRecipe('Tacos al Pastor', {'mexican', 'street food'}, 'https://tastesbetterfromscratch.com/tacos-al-pastor/');
+    manager.addRecipe('Sushi Roll', {'japanese', 'seafood'}, 'https://www.fifteenspatulas.com/homemade-sushi/');
+    manager.addRecipe('Lasagna', {'italian', 'pasta', 'baked'}, 'https://thecozycook.com/easy-lasagna-recipe/');
+    manager.addRecipe('Carbonara', {'italian', 'pasta', 'eggs'}, 'https://www.recipetineats.com/carbonara/');
+    manager.addRecipe('Enchiladas Rojas', {'mexican', 'spicy', 'cheesy'}, 'https://www.muydelish.com/enchiladas-rojas/');
+    manager.addRecipe('Pulled Pork Sandwich', {'american', 'barbecue', 'slow-cooked'}, 'https://mytastytrials.com/2020/04/28/best-bbq-pulled-pork-sammies/');
+    manager.addRecipe('Chicken and Waffles', {'american', 'comfort', 'breakfast'}, 'https://www.sweetteaandthyme.com/fried-chicken-waffles-spicy-honey-sauce/');
+    manager.addRecipe('Meatloaf', {'american', 'dinner', 'classic'}, 'https://natashaskitchen.com/meatloaf-recipe/');
+    manager.addRecipe('Cornbread', {'american', 'southern', 'bread'}, 'https://www.allrecipes.com/recipe/17891/golden-sweet-cornbread/'); 
+
+    await saveDatabase(manager); // 💾 Save to JSON
+    print('Sample recipes added!');
+  }
 
   while (true) {
-    final isLoggedIn = manager.loggedInUser != null;
+    //final isLoggedIn = manager.loggedInUser != null;
     final options = manager.loggedInUser != null
       ? ['Search Recipes', 'Browse Recipes', 'View Saved Recipes', 'Add Recipe','', 'Logout', 'Quit']
       : ['Login', 'Signup', 'Quit'];
@@ -42,10 +63,11 @@ void main() async {
   }
 }
 
+//~~~~~~~~~~~~~~~Menu UI~~~~~~~~~~~~~~~~~
 int showMenu(List<String> options, String title) {
   int selected = 0;
-  const boxWidth = 50; // width of the menu box
-  const leftPad = 2;   // left margin for spacing
+  const boxWidth = 50;
+  const leftPad = 2;
 
   while (true) {
     console.clearScreen();
@@ -124,6 +146,7 @@ int showMenu(List<String> options, String title) {
   }
 }
 
+//~~~~~~~~~~~~Login~~~~~~~~~~~~~~
 void handleLogin() {
   const boxWidth = 50;
   const leftPad = 2;
@@ -178,10 +201,9 @@ void handleLogin() {
   console.resetColorAttributes();
 
   console.cursorPosition = Coordinate(messageRow + 1, leftPad + 2);
-  pause();
 }
 
-
+//~~~~~~~~~~~~~~SignUp~~~~~~~~~~~~~~
 void handleSignup() {
   const boxWidth = 50;
   const leftPad = 2;
@@ -239,6 +261,7 @@ void handleSignup() {
   pause();
 }
 
+//~~~~~~~~~~~~~RecipeDetails~~~~~~~~~~~~~~
 void showRecipeDetails(Recipe recipe) {
   const boxWidth = 50;
   const leftPad = 2;
@@ -271,9 +294,19 @@ void showRecipeDetails(Recipe recipe) {
   console.writeLine('║ ' + tagsLine.padRight(paddedWidth - 1) + '║');
 
   // URL
-  final urlLine = 'URL: ${recipe.url}';
+  final fullUrl = recipe.url;
+  final maxUrlLength = paddedWidth - 7;
+
+  final clippedUrl = fullUrl.length > maxUrlLength
+    ? fullUrl.substring(0, maxUrlLength)
+    : fullUrl;
+
   console.cursorPosition = Coordinate(row++, leftPad);
-  console.writeLine('║ ' + urlLine.padRight(paddedWidth - 1) + '║');
+  console.writeLine('║ URL: ' + clippedUrl.padRight(paddedWidth - 6) + '║');
+
+  if (fullUrl.length > maxUrlLength) {
+    console.cursorPosition = Coordinate(row++, leftPad);
+  }
 
   // Spacer
   console.cursorPosition = Coordinate(row++, leftPad);
@@ -310,7 +343,7 @@ void showRecipeDetails(Recipe recipe) {
   pause();
 }
 
-
+//~~~~~~~~~~~~~~SearchRecipe~~~~~~~~~~~~~~~~~
 void searchRecipes() {
   console.clearScreen();
   console.cursorPosition = Coordinate(2, 2);
@@ -324,7 +357,9 @@ void searchRecipes() {
   }
 
   final recipeIds = manager.search(query.trim());
-  final results = manager.recipes.where((r) => recipeIds.contains(r.id)).toList();
+  final results = manager.recipes
+      .where((recipe) => recipeIds.contains(recipe.id))
+      .toList();
 
   if (results.isEmpty) {
     print('\nNo recipes found matching "$query".');
@@ -363,6 +398,8 @@ void searchRecipes() {
   }
 }
 
+
+//~~~~~~~~~~~~~~BrowseRecipe~~~~~~~~~~~~~~
 void browseRecipes() {
   if (manager.recipes.isEmpty) {
     console.clearScreen();
@@ -405,6 +442,7 @@ void browseRecipes() {
   }
 }
 
+//~~~~~~~~~~~~~AddRecipe~~~~~~~~~~~~~
 Future<void> addRecipe() async {
   const boxWidth = 50;
   const leftPad = 2;
@@ -474,7 +512,7 @@ Future<void> addRecipe() async {
   pause();
 }
 
-
+//~~~~~~~~~~~~~ViewSaved~~~~~~~~~~~~~
 void viewSavedRecipes() {
   if (manager.loggedInUser == null) {
     console.clearScreen();
@@ -528,6 +566,29 @@ void viewSavedRecipes() {
   }
 }
 
+List<String> wrapText(String text, int width) {
+  List<String> lines = [];
+  while (text.length > width) {
+    int breakIndex = width;
+
+    // Try to break at the last space if possible
+    for (int i = width; i >= 0; i--) {
+      if (text[i] == ' ') {
+        breakIndex = i;
+        break;
+      }
+    }
+
+    lines.add(text.substring(0, breakIndex).trim());
+    text = text.substring(breakIndex).trim();
+  }
+
+  if (text.isNotEmpty) {
+    lines.add(text);
+  }
+
+  return lines;
+}
 
 void pause() {
   stdout.write('\nPress Enter to continue...');
