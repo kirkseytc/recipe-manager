@@ -7,13 +7,23 @@ late RecipeManager manager;
 
 void clearConsole() => stdout.write('\x1B[2J\x1B[0;0H');
 
+void drawBox(String title, List<String> contentLines) {
+  const width = 60;
+  print('+' + '-' * width + '+');
+  print('| ' + title.padRight(width - 2) + '|');
+  print('+' + '-' * width + '+');
+  for (var line in contentLines) {
+    print('| ' + line.padRight(width - 2) + '|');
+  }
+  print('+' + '-' * width + '+');
+}
+
 void main() async {
   manager = await loadDatabase();
   manager.recipes.clear();
   await saveDatabase(manager);
-  print('All recipes cleared!');
+  clearConsole();
 
-  // Populate recipes if empty
   if (manager.recipes.isEmpty) {
     manager.addRecipe('Spaghetti', {'italian', 'dinner'}, 'https://www.inspiredtaste.net/38940/spaghetti-with-meat-sauce-recipe/');
     manager.addRecipe('Avocado Toast', {'breakfast', 'vegetarian'}, 'https://cookieandkate.com/avocado-toast-recipe/');
@@ -28,20 +38,32 @@ void main() async {
     manager.addRecipe('Meatloaf', {'american', 'dinner', 'classic'}, 'https://natashaskitchen.com/meatloaf-recipe/');
     manager.addRecipe('Cornbread', {'american', 'southern', 'bread'}, 'https://www.allrecipes.com/recipe/17891/golden-sweet-cornbread/');
     await saveDatabase(manager);
-    //print('Sample recipes added!');
-    clearConsole();
   }
 
   while (true) {
+    clearConsole();
     final isLoggedIn = manager.loggedInUser != null;
-    print('\n=== Recipe Manager ===');
-    if (isLoggedIn) {
-      print('Welcome, ${manager.loggedInUser!.username}!');
-      print('1) Search Recipes\n2) Browse Recipes\n3) View Saved Recipes\n4) Add Recipe\n5) Logout\n6) Quit');
-    } else {
-      print('1) Login\n2) Signup\n3) Quit');
-    }
-    stdout.write('\nChoose an option: ');
+    final username = manager.loggedInUser?.username ?? '';
+    final menuLines = isLoggedIn
+        ? [
+            'Welcome, $username!',
+            '',
+            '1) Search Recipes',
+            '2) Browse Recipes',
+            '3) View Saved Recipes',
+            '4) Add Recipe',
+            '',
+            '5) Logout',
+            '6) Save & Quit'
+          ]
+        : [
+            '1) Login',
+            '2) Signup',
+            '',
+            '3) Save & Quit'
+          ];
+    drawBox('Recipe Manager', menuLines);
+    stdout.write('Choose an option: ');
     final input = stdin.readLineSync();
     if (!isLoggedIn) {
       switch (input) {
@@ -56,9 +78,7 @@ void main() async {
         case '2': browseRecipes(); break;
         case '3': viewSavedRecipes(); break;
         case '4': await addRecipe(); break;
-        case '5': manager.logout(); 
-          clearConsole(); 
-          print('You have been logged out.'); break;
+        case '5': manager.logout(); clearConsole(); print('You have been logged out.'); break;
         case '6': await quit(); return;
         default: print('Invalid option.');
       }
@@ -180,36 +200,51 @@ void viewSavedRecipes() {
 
 Future<void> addRecipe() async {
   clearConsole();
+  final lines = <String>[];
+
   stdout.write('Recipe Title: ');
   final title = stdin.readLineSync();
+  lines.add('Title: ${title ?? ''}');
 
   stdout.write('Tags (comma-separated): ');
   final tagInput = stdin.readLineSync();
   final tags = tagInput?.split(',').map((t) => t.trim()).toSet() ?? {};
+  lines.add('Tags: ${tags.join(', ')}');
 
   stdout.write('URL (optional): ');
   final url = stdin.readLineSync() ?? '';
+  lines.add('URL: $url');
 
   if (title == null || title.trim().isEmpty) {
     print('Title required.');
     return;
   }
   clearConsole();
-
+  drawBox('New Recipe Added', lines);
   manager.addRecipe(title.trim(), tags, url.trim());
   await saveDatabase(manager);
-  print('Recipe added and saved!');
+  print('Recipe saved!');
 }
 
 void showRecipeDetails(Recipe recipe) {
   clearConsole();
-  print('\n=== ${recipe.title} ===');
-  print('Tags: ${recipe.tags.join(', ')}');
-  print('URL: ${recipe.url}');
+  const boxWidth = 50;
+  final displayUrl = recipe.url.length > boxWidth
+      ? recipe.url.substring(0, boxWidth - 3)
+      : recipe.url;
+
+  print('\n+${'-' * boxWidth}+');
+  print('| ${recipe.title.padRight(boxWidth - 2)}|');
+  print('| ${'Tags: ${recipe.tags.join(', ')}'.padRight(boxWidth - 2)}|');
+  print('| ${'URL:'.padRight(boxWidth - 2)}|');
+  print('| ${displayUrl.padRight(boxWidth - 2)}|');
+  print('+${'-' * boxWidth}+\n');
 
   if (manager.loggedInUser != null) {
     final isSaved = manager.loggedInUser!.savedRecipeIds.contains(recipe.id);
-    stdout.write(isSaved ? 'Remove from favorites? (y/n): ' : 'Save to favorites? (y/n): ');
+    stdout.write(isSaved
+        ? 'Remove from favorites? (y/n): '
+        : 'Save to favorites? (y/n): ');
     final input = stdin.readLineSync()?.toLowerCase();
     clearConsole();
     if (input == 'y') {
