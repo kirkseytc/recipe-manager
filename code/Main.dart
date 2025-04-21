@@ -56,7 +56,7 @@ void main() async {
         case '2': browseRecipes(); break;
         case '3': viewSavedRecipes(); break;
         case '4': await addRecipe(); break;
-        case '5': manager.loggedInUser = null; 
+        case '5': manager.logout(); 
           clearConsole(); 
           print('You have been logged out.'); break;
         case '6': await quit(); return;
@@ -226,6 +226,7 @@ void showRecipeDetails(Recipe recipe) {
 
 Future<void> quit() async {
   clearConsole();
+  manager.logout();
   print('Saving data...');
   await saveDatabase(manager);
   print('Goodbye!');
