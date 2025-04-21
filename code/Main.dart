@@ -43,7 +43,7 @@ void main() async {
   while (true) {
     clearConsole();
     final isLoggedIn = manager.loggedInUser != null;
-    final username = manager.loggedInUser?.username ?? '';
+    final username = manager.whoami() ?? '';
     final menuLines = isLoggedIn
         ? [
             'Welcome, $username!',
