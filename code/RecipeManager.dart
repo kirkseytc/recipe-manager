@@ -151,22 +151,26 @@ class RecipeManager {
   /// 
   Set<int> search(String searchparam){
 
+    Set<String> searchTokens = searchparam.toLowerCase().split(' ').toSet();
+
     Set<int> results = Set();
 
     for(Recipe r in this.recipes){
-
-      if(r.title.toLowerCase().contains(searchparam.toLowerCase())){
-        results.add(r.id);
-      }
-
-      for(String tag in r.tags){
-
-        if(tag.toLowerCase().contains(searchparam.toLowerCase())){
+      
+      for(String s in searchTokens){
+        
+        if(r.title.toLowerCase().contains(s)){
           results.add(r.id);
         }
 
-      }
+        for(String tag in r.tags){
 
+          if(tag.toLowerCase().contains(s)){
+            results.add(r.id);
+          }
+
+        }
+      }
     }
 
     return results;
