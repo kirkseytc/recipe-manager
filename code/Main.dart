@@ -10,10 +10,10 @@ void clearConsole() => stdout.write('\x1B[2J\x1B[0;0H');
 void drawBox(String title, List<String> contentLines) {
   const width = 60;
   print('+' + '-' * width + '+');
-  print('| ' + title.padRight(width - 2) + '|');
+  print('| ' + title.padRight(width - 1) + '|');
   print('+' + '-' * width + '+');
   for (var line in contentLines) {
-    print('| ' + line.padRight(width - 2) + '|');
+    print('| ' + line.padRight(width - 1) + '|');
   }
   print('+' + '-' * width + '+');
 }
@@ -228,16 +228,16 @@ Future<void> addRecipe() async {
 
 void showRecipeDetails(Recipe recipe) {
   clearConsole();
-  const boxWidth = 50;
+  const boxWidth = 70;
   final displayUrl = recipe.url.length > boxWidth
-      ? recipe.url.substring(0, boxWidth - 3)
+      ? recipe.url.substring(0, boxWidth - 2)
       : recipe.url;
 
   print('\n+${'-' * boxWidth}+');
-  print('| ${recipe.title.padRight(boxWidth - 2)}|');
-  print('| ${'Tags: ${recipe.tags.join(', ')}'.padRight(boxWidth - 2)}|');
-  print('| ${'URL:'.padRight(boxWidth - 2)}|');
-  print('| ${displayUrl.padRight(boxWidth - 2)}|');
+  print('| ${recipe.title.padRight(boxWidth - 1)}|');
+  print('| ${'Tags: ${recipe.tags.join(', ')}'.padRight(boxWidth - 1)}|');
+  print('| ${'URL:'.padRight(boxWidth - 1)}|');
+  print('| ${displayUrl.padRight(boxWidth - 1)}|');
   print('+${'-' * boxWidth}+\n');
 
   if (manager.loggedInUser != null) {
