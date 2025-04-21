@@ -86,7 +86,7 @@ void handleSignup() {
   clearConsole();
   stdout.write('Choose a username: ');
   final username = stdin.readLineSync();
-  stdout.write('Choose a password: ');
+  stdout.write('Choose a password (case-sensitive): ');
   final password = stdin.readLineSync();
   clearConsole();
 

@@ -23,8 +23,8 @@ class RecipeManager {
   int login(String username, String password){
 
     for(User usr in this.users){
-      
-      if(usr.username.compareTo(username) != 0){
+  
+      if(usr.username.toLowerCase().compareTo(username.toLowerCase()) != 0){
         continue;
       }
 
@@ -50,12 +50,12 @@ class RecipeManager {
   int signup(String username, String password){
 
     for(User usr in this.users){
-      if(usr.username.compareTo(username) == 0){
+      if(usr.username.toLowerCase().compareTo(username.toLowerCase()) == 0){
         return 1;
       }
     }
 
-    this.users.add(User(username, password.hashCode));
+    this.users.add(User(username.toLowerCase(), password.hashCode));
     return 0;
   }
 
