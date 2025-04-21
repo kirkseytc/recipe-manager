@@ -67,20 +67,42 @@ void main() async {
     final input = stdin.readLineSync();
     if (!isLoggedIn) {
       switch (input) {
-        case '1': handleLogin(); break;
-        case '2': handleSignup(); break;
-        case '3': await quit(); return;
-        default: print('Invalid option.');
+        case '1': 
+          handleLogin(); 
+          break;
+        case '2': 
+          handleSignup(); 
+          break;
+        case '3': 
+          await quit(); 
+          return;
+        default: 
+          print('Invalid option.');
       }
     } else {
       switch (input) {
-        case '1': searchRecipes(); break;
-        case '2': browseRecipes(); break;
-        case '3': viewSavedRecipes(); break;
-        case '4': await addRecipe(); break;
-        case '5': manager.logout(); clearConsole(); print('You have been logged out.'); break;
-        case '6': await quit(); return;
-        default: print('Invalid option.');
+        case '1': 
+          searchRecipes(); 
+          break;
+        case '2': 
+          browseRecipes(); 
+          break;
+        case '3': 
+          viewSavedRecipes(); 
+          break;
+        case '4': 
+          await addRecipe(); 
+          break;
+        case '5': 
+          manager.logout(); 
+          clearConsole(); 
+          print('You have been logged out.'); 
+          break;
+        case '6': 
+          await quit(); 
+          return;
+        default: 
+          print('Invalid option.');
       }
     }
   }
