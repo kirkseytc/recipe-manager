@@ -5,6 +5,8 @@ import 'SaveAndLoad.dart';
 
 late RecipeManager manager;
 
+void clearConsole() => stdout.write('\x1B[2J\x1B[0;0H');
+
 void main() async {
   manager = await loadDatabase();
   manager.recipes.clear();
@@ -26,7 +28,8 @@ void main() async {
     manager.addRecipe('Meatloaf', {'american', 'dinner', 'classic'}, 'https://natashaskitchen.com/meatloaf-recipe/');
     manager.addRecipe('Cornbread', {'american', 'southern', 'bread'}, 'https://www.allrecipes.com/recipe/17891/golden-sweet-cornbread/');
     await saveDatabase(manager);
-    print('Sample recipes added!');
+    //print('Sample recipes added!');
+    clearConsole();
   }
 
   while (true) {
@@ -53,7 +56,9 @@ void main() async {
         case '2': browseRecipes(); break;
         case '3': viewSavedRecipes(); break;
         case '4': await addRecipe(); break;
-        case '5': manager.loggedInUser = null; break;
+        case '5': manager.loggedInUser = null; 
+          clearConsole(); 
+          print('You have been logged out.'); break;
         case '6': await quit(); return;
         default: print('Invalid option.');
       }
@@ -62,10 +67,12 @@ void main() async {
 }
 
 void handleLogin() {
+  clearConsole();
   stdout.write('Username: ');
   final username = stdin.readLineSync();
   stdout.write('Password: ');
   final password = stdin.readLineSync();
+  clearConsole();
 
   if (username != null && password != null) {
     final result = manager.login(username, password);
@@ -76,20 +83,25 @@ void handleLogin() {
 }
 
 void handleSignup() {
+  clearConsole();
   stdout.write('Choose a username: ');
   final username = stdin.readLineSync();
   stdout.write('Choose a password: ');
   final password = stdin.readLineSync();
+  clearConsole();
 
   if (username != null && password != null) {
-    final result = manager.signup(username, password);
-    print(result == 0 ? 'Signup successful!' : 'Username already taken.');
+    final result = manager.signupAndLogin(username.trim(), password.trim());
+    print(result == 0
+        ? 'Signup successful and logged in!'
+        : 'Username already taken.');
   } else {
     print('Invalid input.');
   }
 }
 
 void searchRecipes() {
+  clearConsole();
   stdout.write('Enter a keyword to search: ');
   final query = stdin.readLineSync();
 
@@ -117,9 +129,11 @@ void searchRecipes() {
       showRecipeDetails(results[index - 1]);
     }
   }
+  clearConsole();
 }
 
 void browseRecipes() {
+  clearConsole();
   if (manager.recipes.isEmpty) {
     print('No recipes available.');
     return;
@@ -135,9 +149,11 @@ void browseRecipes() {
   if (index != null && index > 0 && index <= manager.recipes.length) {
     showRecipeDetails(manager.recipes[index - 1]);
   }
+  clearConsole();
 }
 
 void viewSavedRecipes() {
+  clearConsole();
   if (manager.loggedInUser == null) {
     print('Not logged in.');
     return;
@@ -159,9 +175,11 @@ void viewSavedRecipes() {
   if (index != null && index > 0 && index <= saved.length) {
     showRecipeDetails(saved[index - 1]);
   }
+  clearConsole();
 }
 
 Future<void> addRecipe() async {
+  clearConsole();
   stdout.write('Recipe Title: ');
   final title = stdin.readLineSync();
 
@@ -176,6 +194,7 @@ Future<void> addRecipe() async {
     print('Title required.');
     return;
   }
+  clearConsole();
 
   manager.addRecipe(title.trim(), tags, url.trim());
   await saveDatabase(manager);
@@ -183,6 +202,7 @@ Future<void> addRecipe() async {
 }
 
 void showRecipeDetails(Recipe recipe) {
+  clearConsole();
   print('\n=== ${recipe.title} ===');
   print('Tags: ${recipe.tags.join(', ')}');
   print('URL: ${recipe.url}');
@@ -191,6 +211,7 @@ void showRecipeDetails(Recipe recipe) {
     final isSaved = manager.loggedInUser!.savedRecipeIds.contains(recipe.id);
     stdout.write(isSaved ? 'Remove from favorites? (y/n): ' : 'Save to favorites? (y/n): ');
     final input = stdin.readLineSync()?.toLowerCase();
+    clearConsole();
     if (input == 'y') {
       if (isSaved) {
         manager.loggedInUser!.removeRecipe(recipe.id);
@@ -204,6 +225,7 @@ void showRecipeDetails(Recipe recipe) {
 }
 
 Future<void> quit() async {
+  clearConsole();
   print('Saving data...');
   await saveDatabase(manager);
   print('Goodbye!');
