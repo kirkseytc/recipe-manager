@@ -4,6 +4,7 @@ import 'RecipeManager.dart';
 import 'SaveAndLoad.dart';
 
 late RecipeManager manager;
+String? message;
 
 void clearConsole() => stdout.write('\x1B[2J\x1B[0;0H');
 
@@ -20,9 +21,6 @@ void drawBox(String title, List<String> contentLines) {
 
 void main() async {
   manager = await loadDatabase();
-  manager.recipes.clear();
-  await saveDatabase(manager);
-  clearConsole();
 
   if (manager.recipes.isEmpty) {
     manager.addRecipe('Spaghetti', {'italian', 'dinner'}, 'https://www.inspiredtaste.net/38940/spaghetti-with-meat-sauce-recipe/');
@@ -42,6 +40,12 @@ void main() async {
 
   while (true) {
     clearConsole();
+    
+    if(message != null){
+      print('[$message]');
+      message = null;
+    }
+
     final isLoggedIn = manager.loggedInUser != null;
     final username = manager.whoami() ?? '';
     final menuLines = isLoggedIn
@@ -91,12 +95,11 @@ void main() async {
           viewSavedRecipes(); 
           break;
         case '4': 
-          await addRecipe(); 
+          addRecipe(); 
           break;
         case '5': 
           manager.logout(); 
-          clearConsole(); 
-          print('You have been logged out.'); 
+          message = 'You have been Logged Out!'; 
           break;
         case '6': 
           await quit(); 
@@ -113,14 +116,27 @@ void handleLogin() {
   stdout.write('Username: ');
   final username = stdin.readLineSync();
   stdout.write('Password: ');
+  stdout.write('\x1B[8m');
   final password = stdin.readLineSync();
+  stdout.write('\x1B[28m');
   clearConsole();
 
   if (username != null && password != null) {
     final result = manager.login(username, password);
-    print(result == 0 ? 'Login successful!' : 'Login failed.');
+    
+    switch(result){
+      case 0:
+        break;
+      case 1:
+        message = 'Login Failed: Invalid Password';
+        break;
+      case 2:
+        message = 'Login Failed: Username Not Found';
+        break;
+    }
+
   } else {
-    print('Invalid input.');
+    message = 'Invalid input.';
   }
 }
 
@@ -134,9 +150,15 @@ void handleSignup() {
 
   if (username != null && password != null) {
     final result = manager.signupAndLogin(username.trim(), password.trim());
-    print(result == 0
-        ? 'Signup successful and logged in!'
-        : 'Username already taken.');
+    
+    switch(result){
+      case 0:
+        break;
+      case 1:
+        message = 'Signup Failed: Username Already Taken';
+        break;
+    }
+
   } else {
     print('Invalid input.');
   }
@@ -148,7 +170,7 @@ void searchRecipes() {
   final query = stdin.readLineSync();
 
   if (query == null || query.isEmpty) {
-    print('Search canceled.');
+    message = 'Search Canceled.';
     return;
   }
 
@@ -156,7 +178,7 @@ void searchRecipes() {
   final results = manager.recipes.where((r) => ids.contains(r.id)).toList();
 
   if (results.isEmpty) {
-    print('No recipes found.');
+    message = 'No Recipes Found.';
     return;
   }
 
@@ -171,13 +193,12 @@ void searchRecipes() {
       showRecipeDetails(results[index - 1]);
     }
   }
-  clearConsole();
 }
 
 void browseRecipes() {
   clearConsole();
   if (manager.recipes.isEmpty) {
-    print('No recipes available.');
+    message = 'No Recipes Available.';
     return;
   }
 
@@ -191,20 +212,16 @@ void browseRecipes() {
   if (index != null && index > 0 && index <= manager.recipes.length) {
     showRecipeDetails(manager.recipes[index - 1]);
   }
-  clearConsole();
 }
 
 void viewSavedRecipes() {
   clearConsole();
-  if (manager.loggedInUser == null) {
-    print('Not logged in.');
-    return;
-  }
+  
   final savedIds = manager.loggedInUser!.savedRecipeIds;
   final saved = manager.recipes.where((r) => savedIds.contains(r.id)).toList();
 
   if (saved.isEmpty) {
-    print('No saved recipes.');
+    message = 'No Saved Recipes.';
     return;
   }
 
@@ -220,7 +237,7 @@ void viewSavedRecipes() {
   clearConsole();
 }
 
-Future<void> addRecipe() async {
+void addRecipe() {
   clearConsole();
   final lines = <String>[];
 
@@ -238,19 +255,19 @@ Future<void> addRecipe() async {
   lines.add('URL: $url');
 
   if (title == null || title.trim().isEmpty) {
-    print('Title required.');
+    message = 'Add Failed: Title Required.';
     return;
   }
+
   clearConsole();
   drawBox('New Recipe Added', lines);
   manager.addRecipe(title.trim(), tags, url.trim());
-  await saveDatabase(manager);
-  print('Recipe saved!');
+  message = 'Recipe Saved!';
 }
 
 void showRecipeDetails(Recipe recipe) {
   clearConsole();
-  const boxWidth = 70;
+  const boxWidth = 75;
   final displayUrl = recipe.url.length > boxWidth
       ? recipe.url.substring(0, boxWidth - 2)
       : recipe.url;
@@ -265,17 +282,17 @@ void showRecipeDetails(Recipe recipe) {
   if (manager.loggedInUser != null) {
     final isSaved = manager.loggedInUser!.savedRecipeIds.contains(recipe.id);
     stdout.write(isSaved
-        ? 'Remove from favorites? (y/n): '
-        : 'Save to favorites? (y/n): ');
+        ? 'Remove from favorites? (y/[n]): '
+        : 'Save to favorites? (y/[n]): ');
     final input = stdin.readLineSync()?.toLowerCase();
     clearConsole();
     if (input == 'y') {
       if (isSaved) {
         manager.loggedInUser!.removeRecipe(recipe.id);
-        print('Removed from favorites.');
+        message = 'Removed from favorites.';
       } else {
         manager.loggedInUser!.saveRecipe(recipe.id);
-        print('Saved to favorites.');
+        message = 'Saved to favorites.';
       }
     }
   }

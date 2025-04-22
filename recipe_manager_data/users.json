@@ -1,1 +1,16 @@
-[{"username":"user","password":148256009,"saved_recipe_ids":[]}]
+[
+    {
+        "username": "joey",
+        "password": 759253758,
+        "saved_recipe_ids": []
+    },
+    {
+        "username": "admin",
+        "password": 148256009,
+        "saved_recipe_ids": [
+            2,
+            9,
+            12
+        ]
+    }
+]
